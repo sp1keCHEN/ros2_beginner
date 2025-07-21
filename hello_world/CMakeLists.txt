@@ -1,66 +1,50 @@
 cmake_minimum_required(VERSION 3.5)
 project(hello_world)
 
-# Default to C99
-if(NOT CMAKE_C_STANDARD)
-  set(CMAKE_C_STANDARD 99)
-endif()
+# 设置编译标准
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_CXX_STANDARD 14)
 
-# Default to C++14
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
-endif()
-
+# 编译器警告（可选）
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-# find dependencies
+# 查找依赖
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(example_interfaces REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  # the following line skips the linter which checks for copyrights
-  # uncomment the line when a copyright and license is not present in all source files
-  #set(ament_cmake_copyright_FOUND TRUE)
-  # the following line skips cpplint (only works in a git repo)
-  # uncomment the line when this package is not in a git repo
-  #set(ament_cmake_cpplint_FOUND TRUE)
-  ament_lint_auto_find_test_dependencies()
-endif()
+# 生成自定义消息和服务
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/RobotPose.msg"
+  "msg/RobotStatus.msg"
+  "srv/MoveRobot.srv"
+  DEPENDENCIES geometry_msgs
+)
 
-ament_package()
-
+# 添加可执行文件
 add_executable(node_01 src/node_01.cpp)
-ament_target_dependencies(node_01 rclcpp)
+add_executable(node_03 src/node_03.cpp)
+add_executable(publisher src/publisher.cpp)
+add_executable(subscriber src/subscriber.cpp)
 
+# 设置依赖
+ament_target_dependencies(node_01 rclcpp)
+ament_target_dependencies(node_03 rclcpp)
+ament_target_dependencies(publisher rclcpp example_interfaces)
+ament_target_dependencies(subscriber rclcpp example_interfaces)
+
+# 安装目标
 install(TARGETS
   node_01
-  DESTINATION lib/${PROJECT_NAME}
-)
-
-add_executable(node_03 src/node_03.cpp)
-ament_target_dependencies(node_03 rclcpp)
-
-install(TARGETS
   node_03
-  DESTINATION lib/${PROJECT_NAME}
-)
-
-add_executable(publisher src/publisher.cpp)
-ament_target_dependencies(publisher rclcpp)
-
-install(TARGETS
   publisher
-  DESTINATION lib/${PROJECT_NAME}
-)
-
-add_executable(subscriber src/subscriber.cpp)
-ament_target_dependencies(subscriber rclcpp)
-
-install(TARGETS
   subscriber
   DESTINATION lib/${PROJECT_NAME}
 )
+
+ament_package()

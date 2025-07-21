@@ -89,3 +89,28 @@ add-zsh-hook precmd update_ros_prompt
 # Define the final prompt structure, including the dynamic ROS prefix.
 # This re-creates the default 'robbyrussell' theme prompt with our addition.
 PROMPT='$ROS_PROMPT_PREFIX%{$fg_bold[cyan]%}%c%{$reset_color%} $(git_prompt_info)'
+
+# Simulate ROS1's roscd functionality for ROS2
+ros2cd() {
+  if [ -z "$1" ]; then
+    echo "Usage: ros2cd <package_name>"
+    compdef _ros2cd_completion ros2cd
+    return 1
+  fi
+  local pkg_path=$(ros2 pkg prefix "$1" 2>/dev/null)
+  if [ -z "$pkg_path" ]; then
+    echo "Package '$1' not found"
+    return 1
+  fi
+  cd "$pkg_path"
+}
+
+# Completion function for ros2cd
+_ros2cd_completion() {
+  local -a packages
+  packages=($(ros2 pkg list 2>/dev/null))
+  compadd -a packages
+}
+
+# Register the completion function for ros2cd
+compdef _ros2cd_completion ros2cd
