@@ -1,8 +1,10 @@
 # ros2_beginner
 しんせかい! 
 
-[参考教程](https://fishros.com/d2lros2)
-
+* [鱼香ROS](https://fishros.com/d2lros2)：恶劣
+* [古月居](https://book.guyuehome.com/)：较好
+* [创客智造](https://ros.ncnynl.com/)：不错
+* [ROS](https://docs.ros.org/)：唯一真神
 
 ## 小记
 ### this_thread
@@ -206,6 +208,20 @@ ROS2 提供了以下常用 QoS 配置文件（在 `rmw_qos_profiles.h` 中定义
 - **历史记录和深度**：订阅者的深度需大于或等于发布者的深度（对于 `KEEP_LAST`）。
 - **截止时间和存活时间**：订阅者的要求需不严格于发布者。
 
+---
+### 通信模型
+<div style="text-align: center;">
+    <img src="https://book.guyuehome.com/ROS2/2.%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5/image/2.10_DDS/image-20220528020740057.jpg" alt="Model" height="200">
+</div>
+
+第一种，点对点模型，许多客户端连接到一个服务端，每次通信时，通信双方必须建立一条连接。当通信节点增多时，连接数也会增多。而且每个客户端都需要知道服务器的具体地址和所提供的服务，一旦服务器地址发生变化，所有客户端都会受到影响。
+
+第二种，Broker模型，针对点对点模型进行了优化，由Broker集中处理所有人的请求，并进一步找到真正能响应该服务的角色。这样客户端就不用关心服务器的具体地址了。不过问题也很明显，Broker作为核心，它的处理速度会影响所有节点的效率，当系统规模增长到一定程度，Broker就会成为整个系统的性能瓶颈。更麻烦是，如果Broker发生异常，可能导致整个系统都无法正常运转。之前的ROS1系统，使用的就是类似这样的架构。
+
+第三种，广播模型，所有节点都可以在通道上广播消息，并且节点都可以收到消息。这个模型解决了服务器地址的问题，而且通信双方也不用单独建立连接，但是广播通道上的消息太多了，所有节点都必须关心每条消息，其实很多是和自己没有关系的。
+
+第四种，就是以数据为中心的DDS模型了，这种模型与广播模型有些类似，所有节点都可以在DataBus上发布和订阅消息。但它的先进之处在于，通信中包含了很多并行的通路，每个节点可以只关心自己感兴趣的消息，忽略不感兴趣的消息，有点像是一个旋转火锅，各种好吃的都在这个DataBus传送，我们只需要拿自己想吃的就行，其他的和我们没有关系。
+
 ## 技巧
 * 多线程的循环一定要加 `running_`，并在线程循环中检查它，确保线程在对象销毁前退出。
 * 类似于`rclcpp::Client`和`this->get_logger()`都是线程安全的，随便用。
@@ -223,9 +239,13 @@ ROS2 提供了以下常用 QoS 配置文件（在 `rmw_qos_profiles.h` 中定义
 编了Service相关的逻辑，了解了ros2的在新c++版本下的新特性：
 * future真挺未来的。没想到是c++11的内容，之前完全没听过；
 * QoS还要确保收发相匹配，感觉是有点要求高了；
-* node lifecycle看起来挺完备;
-
+* node lifecycle看起来挺完备。
 
 <div style="text-align: center;">
     <img src="https://design.ros2.org/img/node_lifecycle/life_cycle_sm.png" alt="ROS2 node lifecycle" height="300">
 </div>
+
+### 250722
+ros2的action实际大差不差。配了下docker还没配好。
+* action服务时通过action/status维护的，当status isDone触发后，才会call服务端要result，以此确保接收到指令；
+* 通过QoS配置好像甚至能获得历史数据。
