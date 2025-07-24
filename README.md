@@ -6,6 +6,49 @@
 * [创客智造](https://ros.ncnynl.com/)：不错
 * [ROS](https://docs.ros.org/)：唯一真神
 
+## 杂谈
+### 250723
+今天主要搞了docker的配置，建了个docker hub的账号，基于官方的humble镜像，配了下环境还有zsh啥的，上传到自己的hub里了，指令是`docker pull spike667/ros2_humble:v0.2`，tag可能更新。
+对于在docker启动指令，现在使用的是：
+```SH
+sudo docker run -it spike667/ros2_humble:v0.2 /bin/zsh
+```
+可以满足宿主机foxy和镜像里humble的通信，对于其中有特别几点做如下说明：
+* 不可以使用`--network host`，这会导致能获得话题，但是读取不到话题值；
+* 当前版本在ce进行测试，未在docker desktop进行测试（经测试，desktop版宿主机ping不通容器，可能需要进一步配置），p.s.两者的切换可以通过以下指令修改：
+   ```SH
+   (ros2) ~ docker context ls                    
+   NAME            DESCRIPTION                               DOCKER ENDPOINT                                 ERROR
+   default *       Current DOCKER_HOST based configuration   unix:///var/run/docker.sock                     
+   desktop-linux   Docker Desktop                            unix:///home/chen/.docker/desktop/docker.sock   
+   (ros2) ~ docker context use default
+   ```
+* 不同节点间的通信要满足一下几点：
+   * `ROS_DOMAIN_ID`：阈必然要一致，默认都是0；
+   * `RMW_IMPLEMENTATION`：这个不确定需不需要一致，[教程](https://discourse.openrobotics.org/t/ros-cross-distribution-communication/27335)都说要一致，本次都用的`rmw_fastrtps_cpp`，humble的镜像也默认都是这个。
+
+### 250722
+ros2的action实际大差不差。配了下docker还没配好。
+* action服务时通过action/status维护的，当status isDone触发后，才会call服务端要result，以此确保接收到指令；
+* 通过QoS配置好像甚至能获得历史数据。
+
+### 250721
+编了Service相关的逻辑，了解了ros2的在新c++版本下的新特性：
+* future真挺未来的。没想到是c++11的内容，之前完全没听过；
+* QoS还要确保收发相匹配，感觉是有点要求高了；
+* node lifecycle看起来挺完备。
+
+<div style="text-align: center;">
+    <img src="https://design.ros2.org/img/node_lifecycle/life_cycle_sm.png" alt="ROS2 node lifecycle" height="300">
+</div>
+
+### 250718
+学了下基础的发布订阅的编写，以下几点印象：
+* colcon有点垃圾了，不如catkin-tools；
+* 现在写类可以直接继承官方的类，感觉又闭环了，真不错；
+* 全是sharedptr，啥都sharedptr，不知道是我这个教程的人喜欢，还是这就是规范；
+* 话题间的QoS比ros1扩展了许多，值得深究。
+
 ## 小记
 ### this_thread
 `std::this_thread` 提供了与**当前线程**相关的功能，比如：
@@ -227,25 +270,3 @@ ROS2 提供了以下常用 QoS 配置文件（在 `rmw_qos_profiles.h` 中定义
 * 类似于`rclcpp::Client`和`this->get_logger()`都是线程安全的，随便用。
 * AI说多线程spin也能无脑用。
 
-## 杂谈
-### 250718
-学了下基础的发布订阅的编写，以下几点印象：
-* colcon有点垃圾了，不如catkin-tools；
-* 现在写类可以直接继承官方的类，感觉又闭环了，真不错；
-* 全是sharedptr，啥都sharedptr，不知道是我这个教程的人喜欢，还是这就是规范；
-* 话题间的QoS比ros1扩展了许多，值得深究。
-
-### 250721
-编了Service相关的逻辑，了解了ros2的在新c++版本下的新特性：
-* future真挺未来的。没想到是c++11的内容，之前完全没听过；
-* QoS还要确保收发相匹配，感觉是有点要求高了；
-* node lifecycle看起来挺完备。
-
-<div style="text-align: center;">
-    <img src="https://design.ros2.org/img/node_lifecycle/life_cycle_sm.png" alt="ROS2 node lifecycle" height="300">
-</div>
-
-### 250722
-ros2的action实际大差不差。配了下docker还没配好。
-* action服务时通过action/status维护的，当status isDone触发后，才会call服务端要result，以此确保接收到指令；
-* 通过QoS配置好像甚至能获得历史数据。
