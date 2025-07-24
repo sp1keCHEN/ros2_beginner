@@ -1,14 +1,54 @@
 # ros2_beginner
 しんせかい! 
 
-* [鱼香ROS](https://fishros.com/d2lros2)：恶劣
-* [古月居](https://book.guyuehome.com/)：较好
-* [创客智造](https://ros.ncnynl.com/)：不错
+* [鱼香ROS](https://fishros.com/d2lros2)：糟糕
+* [古月居](https://book.guyuehome.com/)：较好，不过全是Python
+* [创客智造](https://ros.ncnynl.com/)：翻译的不错
 * [ROS](https://docs.ros.org/)：唯一真神
 
 ## 杂谈
+### 250724
+原来osrf也有jazzy的官方镜像，那没事了。
+```SH
+# With GPU
+sudo docker run -it \
+  --gpus all \
+  --env="NVIDIA_VISIBLE_DEVICES=all" \
+  --env="NVIDIA_DRIVER_CAPABILITIES=compute,graphics,utility" \
+  --env="DISPLAY=$DISPLAY" \
+  --env="QT_X11_NO_MITSHM=1" \
+  --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
+  --net=host \
+  spike667/ros2_jazzy:v0.2 \
+  zsh
+
+# No GPU
+sudo docker run -it \
+  --net=host \
+  spike667/ros2_jazzy:v0.2 \
+  zsh
+
+# 可能低版本docker不支持上面的类似--env，需要用以下类似方式启动
+sudo docker run -it --rm \
+  --net=host \
+  -e DISPLAY=$DISPLAY \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
+  spike667/ros2_jazzy:v0.2 \
+  zsh
+```
+可以运行如下指令测试，测试GPU在容器中的启用。宿主机GPU还要安装个`nvidia-container-toolkit`。宿主机需要执行类似`xhost +`的操作才能呼出图形界面。
+```SH
+ros2 launch ros_gz_sim_demos rgbd_camera_bridge.launch.py
+```
+运行存在以下问题：
+* `--net=host`指令加了后，在同一个宿主机上的多个容器间就没法通信了；但是在多个宿主机上启动的话，加上该指令可以正常通信，因此按需配置容器；
+* jazzy无法跟宿主机20.04的foxy完美通信，还遇到过cpu占用飙升的情况，没有humble与foxy的适配好。
+
+测试了多个宿主机各自启动容器的测试，没问题，host外加在同一局域网内，没有通信问题。
+
+
 ### 250723
-今天主要搞了docker的配置，建了个docker hub的账号，基于官方的humble镜像，配了下环境还有zsh啥的，上传到自己的hub里了，指令是`docker pull spike667/ros2_humble:v0.2`，tag可能更新。
+今天主要搞了docker的配置，建了个docker hub的账号，基于官方的humble镜像，配了下环境还有zsh啥的，上传到自己的hub里了，指令是`docker pull spike667/ros2_humble:v0.2`*（250724备注:已弃用，转向jazzy，参考杂谈-250724）*，tag可能更新。
 对于在docker启动指令，现在使用的是：
 ```SH
 sudo docker run -it spike667/ros2_humble:v0.2 /bin/zsh
